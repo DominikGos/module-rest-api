@@ -16,9 +16,11 @@ RUN apk update && apk add --no-cache \
     g++ \
     make \
     libxml2-dev && \
+
     # Install PHP extensions (zip, gd, pdo, pdo_mysql, mbstring, opcache, xml)
     docker-php-ext-configure zip && \
     docker-php-ext-install zip gd pdo pdo_mysql mbstring opcache xml && \
+    
     # Enable Opcache
     docker-php-ext-enable opcache
 

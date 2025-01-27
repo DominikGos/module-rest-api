@@ -1,38 +1,47 @@
 version: '3.8'
 
 services:
-  # PHP-FPM Service
   php:
     container_name: php
+    networks:
+      - app
     build:
       dockerfile: docker/php/Dockerfile
       context: .
     volumes:
       - .:/var/www/html  
-      - ./docker/entrypoint.sh:/usr/local/bin/entrypoint.sh  # Mount the script into the container
+      - ./docker/entrypoint.sh:/usr/local/bin/entrypoint.sh 
     expose:
-      - 9000  # Expose port 9000 for PHP-FPM (not accessible externally, only for Nginx)
+      - 9000  
     entrypoint: /bin/bash -c "/usr/local/bin/entrypoint.sh"
 
-  # Nginx Service
   nginx:
     container_name: nginx
-    image: nginx:alpine  # Using the official Nginx image from Docker Hub
+    image: nginx:alpine 
+    networks:
+      - app
     volumes:
-      - .:/var/www/html  # Mount the Laravel app directory
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf  # Mount the custom Nginx configuration
+      - .:/var/www/html  
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf  
     ports:
-      - "8080:80"  # Expose Nginx on port 8080 on your machine
+      - "8080:80" 
 
-  # Optional: MySQL Service (if needed for your Laravel app)
   mysql:
     container_name: mysql
     image: mysql:5.7
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: task
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
 
 volumes:
   mysql_data:
