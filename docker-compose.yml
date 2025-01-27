@@ -14,7 +14,9 @@ services:
     expose:
       - 9000  
     entrypoint: /bin/bash -c "/usr/local/bin/entrypoint.sh"
-
+    depends_on:
+      - mysql
+      
   nginx:
     container_name: nginx
     image: nginx:alpine 
