@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\ColorRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ModuleStoreRequest extends FormRequest
@@ -24,7 +25,7 @@ class ModuleStoreRequest extends FormRequest
         return [
             'width' => 'required|numeric|min:0',
             'height' => 'required|numeric|min:0',
-            'color' => 'required|string', //add better validation
+            'color' => ['required', new ColorRule()],
             'link' => 'required|url'
         ];
     }
