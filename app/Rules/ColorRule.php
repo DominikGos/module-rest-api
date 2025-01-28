@@ -5,6 +5,9 @@ namespace App\Rules;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
+/**
+ * This class checks if the provided color has a valid color hex format or is a color name
+ */
 class ColorRule implements ValidationRule
 {
     /**
