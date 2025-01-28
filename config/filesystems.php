@@ -30,6 +30,12 @@ return [
 
     'disks' => [
 
+        'modules' => [
+            'driver' => 'local',  
+            'root' => storage_path('app/modules'), 
+            'visibility' => 'private', 
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app'),
