@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('modules', function (Blueprint $table) {
             $table->id();
+            $table->integer('width');
+            $table->integer('height');
+            $table->string('color', 30);
+            $table->text('link');
             $table->timestamps();
         });
     }
