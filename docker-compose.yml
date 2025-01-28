@@ -41,6 +41,18 @@ services:
     networks:
       - app
 
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin
+    networks:
+      - app
+    ports:
+     - 8000:80
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: '${DB_HOST}'
+
 networks:
   app:
     driver: bridge
