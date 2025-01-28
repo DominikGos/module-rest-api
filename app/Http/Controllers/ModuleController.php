@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ModuleStoreRequest;
 use App\Services\ModuleService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 
 class ModuleController extends Controller
@@ -28,14 +30,17 @@ class ModuleController extends Controller
         }
     }
 
-    public function download(int $id) {
-        // $moduleId = 1;
-        // $fileContent1 = "Module ID: {$moduleId}\nFile 1 content...";
-    
-        // $filePath1 = "module_{$moduleId}_file1.txt";
-    
-        // Storage::disk('modules')->put($filePath1, $fileContent1);
+    public function download(int $id): mixed  {
+        try {
+            $module = $this->moduleService->getModule($id);
 
-        // $absolutePath = Storage::disk('modules')->path($filePath1);
+            [$htmlPath, $cssPath, $jsPath] = $this->moduleService->generateAndStoreFiles($module);
+            
+            return Storage::disk('modules')->download($jsPath);
+        } catch (ModelNotFoundException $e) {
+            return new JsonResponse([
+                'message' => "Module with id: $id not found"
+            ], 404); 
+        } 
     }
 }
