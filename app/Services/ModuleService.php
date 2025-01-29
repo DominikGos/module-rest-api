@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Exceptions\ZipOpenException;
 use App\Models\Module;
-use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
 class ModuleService {
     private const FILE_DISK = 'modules';
+
+    public function __construct(private FileService $fileService)
+    {}
 
     public function storeModule(array $data): int {
         $module = Module::create($data);
@@ -20,43 +22,49 @@ class ModuleService {
         return Module::findOrFail($moduleId);
     }   
 
+    private function generateHtmlContent(Module $module): string {
+        return "<!DOCTYPE html>
+                <html lang=\"en\">
+                <head>
+                    <meta charset=\"UTF-8\">
+                    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+                    <title>Module Page</title>
+                    <link rel=\"stylesheet\" href=\"module_{$module->id}.css\">
+                </head>
+                <body>
+                    <div id=\"module_{$module->id}\"></div>
+                    <script src=\"module_{$module->id}.js\"></script>
+                </body>
+                </html>";
+    }
+
+    private function generateCssContent(Module $module): string {
+        return "#module_{$module->id} {
+                    width: {$module->width}px;
+                    height: {$module->height}px;
+                    background-color: {$module->color};
+                    cursor: pointer;
+                }";
+    }
+
+    private function generateJsContent(Module $module): string {
+        return "document.querySelector('#module_{$module->id}').addEventListener('click', function(e) {
+                    window.open('{$module->link}', '_blank');
+                });";
+    }
+
     public function generateAndStoreFiles(Module $module): array {
-        $htmlFileContent = 
-            "<!DOCTYPE html>
-            <html lang=\"en\">
-            <head>
-                <meta charset=\"UTF-8\">
-                <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-                <title>Module Page</title>
-                <link rel=\"stylesheet\" href=\"module_{$module->id}.css\">
-            </head>
-            <body>
-                <div id=\"module_{$module->id}\"></div>
-                <script src=\"module_{$module->id}.js\"></script>
-            </body>
-            </html>";
+        $htmlFileContent = $this->generateHtmlContent($module);
+        $cssFileContent = $this->generateCssContent($module);
+        $jsFileContent = $this->generateJsContent($module);
+
         $htmlFilePath = "module_{$module->id}.html";
-
-        $cssFileContent = 
-            "#module_{$module->id} {
-                width: {$module->width}px;
-                height: {$module->height}px;
-                background-color: {$module->color};
-                cursor: pointer;
-            }";
         $cssFilePath = "module_{$module->id}.css";
-
-        $jsFileContent = "test";
-        
-        $jsFileContent = 
-            "document.querySelector('#module_{$module->id}').addEventListener('click', function(e) {
-                window.open('{$module->link}', '_blank');
-            });";
         $jsFilePath = "module_{$module->id}.js";
 
-        Storage::disk(ModuleService::FILE_DISK)->put($htmlFilePath, $htmlFileContent);
-        Storage::disk(ModuleService::FILE_DISK)->put($cssFilePath, $cssFileContent);
-        Storage::disk(ModuleService::FILE_DISK)->put($jsFilePath, $jsFileContent);
+        $this->fileService->storeFile($htmlFilePath, $htmlFileContent);
+        $this->fileService->storeFile($cssFilePath, $cssFileContent);
+        $this->fileService->storeFile($jsFilePath, $jsFileContent);
 
         return [
             $htmlFilePath,
@@ -70,7 +78,7 @@ class ModuleService {
         $files = $this->generateAndStoreFiles($module);
 
         $zipFileName = "module_{$moduleId}.zip";
-        $zipFilePath = Storage::disk(self::FILE_DISK)->path($zipFileName);
+        $zipFilePath = $this->fileService->getFilePath($zipFileName, self::FILE_DISK);
 
         $zip = new ZipArchive();
         if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
@@ -78,7 +86,7 @@ class ModuleService {
         }
 
         foreach ($files as $file) {
-            $fullPath = Storage::disk(self::FILE_DISK)->path($file);
+            $fullPath = $this->fileService->getFilePath($file, self::FILE_DISK);;
             $zip->addFile($fullPath, basename($file));
         }
         $zip->close();
