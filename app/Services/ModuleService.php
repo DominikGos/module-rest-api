@@ -16,11 +16,11 @@ class ModuleService {
         return $module->id;
     }
 
-    public function getModule(int $moduleId) : Module {
+    public function getModule(int $moduleId): Module {
         return Module::findOrFail($moduleId);
     }   
 
-    public function generateAndStoreFiles(Module $module) {
+    public function generateAndStoreFiles(Module $module): array {
         $htmlFileContent = 
             "<!DOCTYPE html>
             <html lang=\"en\">
