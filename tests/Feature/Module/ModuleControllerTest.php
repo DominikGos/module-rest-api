@@ -2,12 +2,16 @@
 
 namespace Tests\Feature\Module;
 
+use App\Exceptions\ZipOpenException;
 use App\Services\ModuleService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Storage;
 use Mockery;
 use Mockery\MockInterface;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\TestCase;
 
 class ModuleControllerTest extends TestCase
@@ -126,6 +130,46 @@ class ModuleControllerTest extends TestCase
         ]);
     }
 
+    public function test_downloadMethod_returnsBinaryResponse_whenSuccess()
+    {
+        $moduleId = 1;
+        $fakeZipPath = "module_{$moduleId}.zip";
+
+        Storage::fake('modules');
+        Storage::disk('modules')->put($fakeZipPath, 'dummy content');
+
+        $this->moduleServiceMock->shouldReceive('getZipFilePath')->with($moduleId)->andReturn(Storage::disk('modules')->path($fakeZipPath));
+
+        $response = $this->get(route('modules.download', ['id' => $moduleId]));
+
+        $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
+        Storage::disk('modules')->assertExists($fakeZipPath);
+    }
+
+    public function test_downloadMethod_returnsNotFound_whenMissingModule()
+    {
+        $moduleId = 999;
+
+        $this->moduleServiceMock->shouldReceive('getZipFilePath')->with($moduleId)->andThrow(new ModelNotFoundException());
+
+        $response = $this->get(route('modules.download', ['id' => $moduleId]));
+
+        $response->assertNotFound()
+            ->assertJson(["message" => "Module with id: $moduleId not found"]);
+    }
+
+    public function test_downloadMethod_handlesZipOpenException()
+    {
+        $moduleId = 2;
+
+        $this->moduleServiceMock->shouldReceive('getZipFilePath')->with($moduleId)->andThrow(new ZipOpenException());
+
+        $response = $this->get(route('modules.download', ['id' => $moduleId]));
+
+        $response->assertServerError()
+            ->assertJson(["message" => "Failed to open zip file"]);
+    }
+    
     public function tearDown(): void
     {
         Mockery::close();
