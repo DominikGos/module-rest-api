@@ -62,9 +62,9 @@ class ModuleService {
         $cssFilePath = "module_{$module->id}.css";
         $jsFilePath = "module_{$module->id}.js";
 
-        $this->fileService->storeFile($htmlFilePath, $htmlFileContent);
-        $this->fileService->storeFile($cssFilePath, $cssFileContent);
-        $this->fileService->storeFile($jsFilePath, $jsFileContent);
+        $this->fileService->storeFile($htmlFilePath, $htmlFileContent, self::FILE_DISK);
+        $this->fileService->storeFile($cssFilePath, $cssFileContent, self::FILE_DISK);
+        $this->fileService->storeFile($jsFilePath, $jsFileContent, self::FILE_DISK);
 
         return [
             $htmlFilePath,
