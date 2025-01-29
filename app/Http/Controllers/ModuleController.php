@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ZipOpenException;
 use App\Http\Requests\ModuleStoreRequest;
 use App\Services\ModuleService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ModuleController extends Controller
 {
@@ -24,6 +27,22 @@ class ModuleController extends Controller
             return new JsonResponse([
                 'message' => 'An error occurred while creating the module',
             ], 500);
+        }
+    }
+
+    public function download(int $id): JsonResponse|BinaryFileResponse  {
+        try {
+            $zipFilePath = $this->moduleService->getZipFilePath($id);
+            
+            return response()->download($zipFilePath);
+        } catch (ModelNotFoundException $e) {
+            return new JsonResponse([
+                'message' => "Module with id: $id not found"
+            ], 404); 
+        } catch (ZipOpenException $e) {
+            return new JsonResponse([
+                'message' => "Failed to open zip file"
+            ], 500); 
         }
     }
 }
