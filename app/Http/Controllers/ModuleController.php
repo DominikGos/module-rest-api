@@ -8,6 +8,7 @@ use App\Services\ModuleService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ModuleController extends Controller
 {
@@ -29,7 +30,7 @@ class ModuleController extends Controller
         }
     }
 
-    public function download(int $id): mixed  {
+    public function download(int $id): JsonResponse|BinaryFileResponse  {
         try {
             $zipFilePath = $this->moduleService->getZipFilePath($id);
             
